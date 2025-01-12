@@ -15,29 +15,43 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="SpotifyAPI.h">
+    <ClInclude Include="appdata\Downloader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Downloader.h">
+    <ClInclude Include="appdata\Funcs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Updater.h">
+    <ClInclude Include="appdata\SpotifyAPI.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Utils.h">
+    <ClInclude Include="appdata\Updater.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Validator.h">
+    <ClInclude Include="appdata\Utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Funcs.h">
+    <ClInclude Include="appdata\Validator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\init.h">
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\Downloader.cpp">
       <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="appdata\init.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SpotifyAPI.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Updater.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Validator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
