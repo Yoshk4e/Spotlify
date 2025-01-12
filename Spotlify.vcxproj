@@ -131,6 +131,12 @@
     <ClCompile Include="Downloader.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="SpotifyAPI.cpp" />
+    <ClCompile Include="src\Downloader.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\SpotifyAPI.cpp" />
+    <ClCompile Include="src\Updater.cpp" />
+    <ClCompile Include="src\Utils.cpp" />
+    <ClCompile Include="src\Validator.cpp" />
     <ClCompile Include="Updater.cpp" />
     <ClCompile Include="Utils.cpp" />
     <ClCompile Include="Validator.cpp" />
