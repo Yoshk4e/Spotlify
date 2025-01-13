@@ -21,7 +21,7 @@ size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* res
 	return totalSize;
 }
 
-plog::ColorConsoleAppender<plog::TxtFormatter> colorConsoleAppender; // Logs to console
+static plog::ColorConsoleAppender<plog::TxtFormatter> colorConsoleAppender; // Logs to console
 
 
 //getToken Function is used to get an acess token from spotify servers

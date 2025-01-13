@@ -8,6 +8,8 @@
 #include <string>
 #include <nlohmann/json.hpp>
 
+std::string currentVersion{ "0.0.0" };
+
 size_t WriteCallBack(void* contents, size_t size, size_t nmemb, std::string* response) {
 	// Calculate total size of received data
 	size_t totalSize = size * nmemb;
@@ -23,47 +25,79 @@ plog::ColorConsoleAppender<plog::TxtFormatter> colorConsoleAppender; //set loggi
 
 std::string checkUpdate() {
 
-	CURL* curl;
-	CURLcode res;
-	std::string Version;
+    plog::init(plog::debug, &colorConsoleAppender);
 
-	//Intiating WinSock
-	curl_global_init(CURL_GLOBAL_ALL);
+    CURL* curl;
+    CURLcode res;
+    std::string Version;
 
-	curl = curl_easy_init();
+    curl_global_init(CURL_GLOBAL_ALL);
 
-	if (curl) {
+    curl = curl_easy_init();
+    if (curl) {
+        curl_easy_setopt(curl, CURLOPT_URL, "https://api.github.com/repos/Yoshk4e/Spotlify/releases/latest");
+        PLOGD << "Checking for Updates..";
 
-		//get latest version number
-		curl_easy_setopt(curl, CURLOPT_URL, "https://api.github.com/repos/Yoshk4e/Spotlify/releases/latest");
-		PLOGD << "Checking for Updates..";
-		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallBack);
-		PLOGD << "Writing CallBack data..";
-		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &Version);
-		PLOGD << "DONE!";
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallBack);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &Version);
 
-		res = curl_easy_perform(curl);
+        struct curl_slist* headers = nullptr;
+        headers = curl_slist_append(headers, "Accept: application/json");
+        headers = curl_slist_append(headers, "User-Agent: Spotlify-Updater/1.0"); 
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 
-		//check for errors
-		if (res != CURLE_OK)
-			fprintf(stderr, "curl_easy_perform() failed: %s \n",
-				curl_easy_strerror(res));
-
-		curl_easy_cleanup(curl);
-	}
+        res = curl_easy_perform(curl);
 
 
-	try {
-		nlohmann::json LatestVer = nlohmann::json::parse(Version);
+        if (res != CURLE_OK) {
+            PLOGF << "cURL error: " << curl_easy_strerror(res);
+        }
 
-		if (LatestVer.contains("tag_name"))
-			PLOGD << "Found version!";
-		return LatestVer["tag_name"];
-	}
-	else if (LatestVer.contains("message")) {
-		PLOGF << "Error Communicating With github servers!: " << LatestVer["message"].get<std::string>() << '\n';
-		(LatestVer.contains("status")) {
-			PLOGF << "Cause: " << LatestVer[]
-		}
-		}
+        curl_easy_cleanup(curl);
+    }
+
+    if (Version.empty()) {
+        PLOGF << "Empty response from server!";
+        curl_global_cleanup();
+        return "1";
+    }
+
+    try {
+        nlohmann::json LatestVer = nlohmann::json::parse(Version);
+
+        if (LatestVer.contains("tag_name")) {
+            std::string latestVersion = LatestVer["tag_name"];
+            PLOGD << "Found Version: " << latestVersion;
+            if (latestVersion != currentVersion) {
+                PLOGD << "A new Update has been released! " << currentVersion << " --> " << static_cast<std::string>(LatestVer["tag_name"]);
+                curl_global_cleanup();
+                return "";
+            }
+            else if (latestVersion == currentVersion) {
+                PLOGD << "It seems like you're on the latest version!";
+                curl_global_cleanup();
+                return "";
+            }
+            curl_global_cleanup();
+            return latestVersion;
+        }
+            PLOGD << "It seems like you're on the latest version!";
+        if (LatestVer.contains("message")) {
+            PLOGF << "GitHub error: " << LatestVer["message"].get<std::string>();
+            if (LatestVer.contains("status")) {
+                PLOGF << "Cause: " << LatestVer["status"].get<std::string>();
+            }
+        }
+        else {
+            PLOGF << "Unhandled response: " << LatestVer.dump(4);
+        }
+    }
+    catch (const nlohmann::json::exception& e) {
+        PLOGF << "JSON Error: " << e.what();
+        curl_global_cleanup();
+        return "1";
+    }
+
+    curl_global_cleanup();
+    return Version;  // Return raw response in case of unexpected conditions
 }
