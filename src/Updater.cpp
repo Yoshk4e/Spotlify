@@ -70,6 +70,7 @@ std::string checkUpdate() {
             PLOGD << "Found Version: " << latestVersion;
             if (latestVersion != currentVersion) {
                 PLOGD << "A new Update has been released! " << currentVersion << " --> " << static_cast<std::string>(LatestVer["tag_name"]);
+                PLOGD << "The Update Can be found here: https://ouo.io/jL9UXU";
                 curl_global_cleanup();
                 return "";
             }
@@ -81,7 +82,6 @@ std::string checkUpdate() {
             curl_global_cleanup();
             return latestVersion;
         }
-            PLOGD << "It seems like you're on the latest version!";
         if (LatestVer.contains("message")) {
             PLOGF << "GitHub error: " << LatestVer["message"].get<std::string>();
             if (LatestVer.contains("status")) {
