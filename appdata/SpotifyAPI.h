@@ -1,10 +1,8 @@
 #pragma once
+#include <vector>
 #include <string>
 
-
-//forward decleration of WriteCallback Function in SpotifyAPI.cpp
-size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* response);
-//forward decleration of getAccessToken Function in SpotifyAPI.cpp
-std::string getAccessToken(const std::string& postData);
-//forward decleration of getPlayList Function in SpotifyAPI.cpp
-//std::string getPlayList(const std::string& Link, const std::string& accesstoken);
+namespace SpotifyAPI {
+    std::string getAccessToken(const std::string& postData);
+    std::vector<std::string> GetPlaylistTrackNames(const std::string& playlistId, const std::string& accessToken);
+}

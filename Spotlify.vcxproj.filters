@@ -30,7 +30,7 @@
     <ClInclude Include="appdata\Utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="appdata\Validator.h">
+    <ClInclude Include="appdata\common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -50,7 +50,7 @@
     <ClCompile Include="src\Utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Validator.cpp">
+    <ClCompile Include="src\common.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

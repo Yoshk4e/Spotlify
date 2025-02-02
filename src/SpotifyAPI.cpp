@@ -1,112 +1,113 @@
-#include <string>
-#include <string_view>
+/*
+ * SpotifyAPI.cpp - Implementation of Spotify Web API interactions
+ * Handles authentication and playlist data retrieval
+ */
+#include "SpotifyAPI.h"
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
 #include <plog/Log.h>
-#include <plog/Appenders/ConsoleAppender.h>
-#include <plog/Appenders/ColorConsoleAppender.h>
-#include <plog/Appenders/RollingFileAppender.h>
-#include <plog/Initializers/RollingFileInitializer.h>
-#include <iostream>
+#include <vector>
+#include <algorithm>
+#include "common.h"
 
 
-size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* response) {
-	// Calculate total size of received data
-	size_t totalSize = size * nmemb;
+namespace SpotifyAPI {
 
-	// Append data to the response string
-	response->append((char*)contents, totalSize);
+    // Authenticates with Spotify API and retrieves access token
+    std::string getAccessToken(const std::string& postData) {
+        CURL* curl;
+        CURLcode res;
+        std::string apiResponse;
 
-	// Return total size of data processed
-	return totalSize;
+        curl_global_init(CURL_GLOBAL_ALL);
+        curl = curl_easy_init();
+
+        if (curl) {
+            curl_easy_setopt(curl, CURLOPT_URL, "https://accounts.spotify.com/api/token");
+            curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postData.c_str());
+            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+            curl_easy_setopt(curl, CURLOPT_WRITEDATA, &apiResponse);
+
+            res = curl_easy_perform(curl);
+            if (res != CURLE_OK) {
+                PLOGF << "CURL error: " << curl_easy_strerror(res);
+            }
+            curl_easy_cleanup(curl);
+        }
+        curl_global_cleanup();
+
+        try {
+            auto JsonResponse = nlohmann::json::parse(apiResponse);
+            if (JsonResponse.contains("access_token")) {
+                return JsonResponse["access_token"];
+            }
+            if (JsonResponse.contains("error")) {
+                PLOGF << "API Error: " << JsonResponse["error"].get<std::string>();
+                if (JsonResponse.contains("error_description")) {
+                    PLOGF << "Details: " << JsonResponse["error_description"].get<std::string>();
+                }
+                return "";
+            }
+            PLOGF << "Malformed response: " << JsonResponse.dump();
+        }
+        catch (const nlohmann::json::exception& e) {
+            PLOGF << "JSON Error: " << e.what();
+            return "1";
+        }
+        return "";
+    }
+
+    // Internal JSON parser
+    static std::vector<std::string> ExtractTrackNames(const std::string& playlistJson) {
+        std::vector<std::string> trackNames;
+        try {
+            auto jsonData = nlohmann::json::parse(playlistJson);
+            if (jsonData.contains("tracks") && jsonData["tracks"].contains("items")) {
+                for (const auto& item : jsonData["tracks"]["items"]) {
+                    if (item.contains("track") && item["track"].contains("name")) {
+                        std::string name = item["track"]["name"];
+                        name.erase(std::remove(name.begin(), name.end(), '/'), name.end());
+                        trackNames.push_back(name);
+                    }
+                }
+            }
+        }
+        catch (const nlohmann::json::exception& e) {
+            PLOGF << "JSON Parse Error: " << e.what();
+        }
+        return trackNames;
+    }
+
+    // Retrieves track names from specified playlist
+    std::vector<std::string> GetPlaylistTrackNames(const std::string& playlistId, const std::string& accessToken) {
+        CURL* curl;
+        CURLcode res;
+        std::string apiResponse;
+        const std::string endpoint = "https://api.spotify.com/v1/playlists/" + playlistId;
+
+        curl_global_init(CURL_GLOBAL_ALL);
+        curl = curl_easy_init();
+
+        if (curl) {
+            struct curl_slist* headers = nullptr;
+            headers = curl_slist_append(headers, ("Authorization: Bearer " + accessToken).c_str());
+            headers = curl_slist_append(headers, "Content-Type: application/json");
+
+            curl_easy_setopt(curl, CURLOPT_URL, endpoint.c_str());
+            curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+            curl_easy_setopt(curl, CURLOPT_WRITEDATA, &apiResponse);
+
+            res = curl_easy_perform(curl);
+            curl_easy_cleanup(curl);
+            curl_slist_free_all(headers);
+
+            if (res != CURLE_OK) {
+                PLOGF << "CURL Error: " << curl_easy_strerror(res);
+                return {};
+            }
+        }
+        curl_global_cleanup();
+        return ExtractTrackNames(apiResponse);
+    }
 }
-
-static plog::ColorConsoleAppender<plog::TxtFormatter> colorConsoleAppender; // Logs to console
-
-
-//getToken Function is used to get an acess token from spotify servers
-
-std::string getAccessToken(const std::string& postData){
-
-	plog::init(plog::debug, &colorConsoleAppender);
-
-	CURL* curl;
-	CURLcode res;
-	std::string apiResponse; // Declare the variable to store the API response
-
-
-	//Intiating WinSock stuff
-	curl_global_init(CURL_GLOBAL_ALL);
-
-	curl = curl_easy_init();
-	if (curl) {
-		//the url used to send a POST request for spotify servers
-		curl_easy_setopt(curl, CURLOPT_URL, "https://accounts.spotify.com/api/token");
-		//POST request required fields
-		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postData.c_str());
-		//output recieved data to the WriteCallback function
-		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-		//Write the data to apiResponse
-		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &apiResponse);
-
-		//perform request and then res gets the return code 
-		res = curl_easy_perform(curl);
-
-		//check for errors
-		if (res != CURLE_OK)
-			fprintf(stderr, "curl_easy_perform() failed: %s \n",
-				curl_easy_strerror(res));
-		//cleanup
-
-		curl_easy_cleanup(curl);
-	}
-
-	try {
-
-		nlohmann::json JsonResponse = nlohmann::json::parse(apiResponse);
-		
-		if (JsonResponse.contains("access_token")) {
-			PLOGD << "Access Token is Valid extracting.....";
-			return JsonResponse["access_token"];
-		}
-		else if (JsonResponse.contains("error")) {
-			PLOGF << "Error From API: " << JsonResponse["error"].get<std::string>() << '\n';
-			if (JsonResponse.contains("error_description")) {
-				PLOGF << "Description: " << JsonResponse["error_description"].get<std::string>() << '\n';
-			}
-		}
-		else {
-			PLOGF << "Unexpected JSON Format: " << JsonResponse.dump(4) << '\n';
-		}
-		
-	}
-	catch (nlohmann::json::parse_error& e) {
-
-		PLOGF << "JSON Parse Error: " << e.what() << '\n';
-		return "1";
-	}
-	catch (nlohmann::json::type_error& e) {
-		PLOGF << "JSON Type Error: " << e.what() << '\n';
-		return "1";
-	}
-	catch (std::exception& e) {
-		PLOGF << "General Error: " << e.what() << '\n';
-		return "1";
-	}
-
-
-	
-	curl_global_cleanup();
-
-	return apiResponse;
-}
-
-//
-//std::string getPlayList(const std::string& Link, const std::string& accesstoken) {
-//	
-//	CURL* curl;
-//	CURLcode res;
-//	std::string PlayList; //Decleration of PlayList variable that will store the response
-//
-//	return "";
-//}

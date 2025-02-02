@@ -131,20 +131,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="appdata\common.h" />
     <ClInclude Include="appdata\Downloader.h" />
     <ClInclude Include="appdata\Funcs.h" />
     <ClInclude Include="appdata\SpotifyAPI.h" />
     <ClInclude Include="appdata\Updater.h" />
     <ClInclude Include="appdata\Utils.h" />
-    <ClInclude Include="appdata\Validator.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\common.cpp" />
     <ClCompile Include="src\Downloader.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\SpotifyAPI.cpp" />
     <ClCompile Include="src\Updater.cpp" />
     <ClCompile Include="src\Utils.cpp" />
-    <ClCompile Include="src\Validator.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
